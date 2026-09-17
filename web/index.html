@@ -1,0 +1,492 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>电商智能客服</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #08111f;
+      --panel: rgba(15, 29, 49, .88);
+      --panel-soft: rgba(25, 44, 70, .72);
+      --line: rgba(148, 163, 184, .2);
+      --text: #e6edf7;
+      --muted: #9badc5;
+      --accent: #57b6ff;
+      --accent-strong: #2d8cf0;
+      --user: #1d5d98;
+      --assistant: #142941;
+      --danger: #ff8e8e;
+    }
+    * { box-sizing: border-box; }
+    body {
+      min-height: 100vh;
+      margin: 0;
+      color: var(--text);
+      font: 15px/1.6 Inter, "Microsoft YaHei", system-ui, sans-serif;
+      background:
+        radial-gradient(circle at 10% 0%, rgba(45, 140, 240, .2), transparent 34%),
+        radial-gradient(circle at 95% 100%, rgba(87, 182, 255, .12), transparent 30%),
+        var(--bg);
+    }
+    .shell { width: min(980px, calc(100% - 32px)); margin: 0 auto; padding: 32px 0; }
+    .app-card {
+      min-height: calc(100vh - 64px);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: var(--panel);
+      box-shadow: 0 24px 80px rgba(0, 0, 0, .28);
+      backdrop-filter: blur(18px);
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 22px 26px;
+      border-bottom: 1px solid var(--line);
+    }
+    .brand { display: flex; align-items: center; gap: 13px; }
+    .logo {
+      display: grid;
+      place-items: center;
+      width: 44px; height: 44px;
+      border-radius: 14px;
+      color: #fff;
+      font-size: 22px;
+      background: linear-gradient(135deg, var(--accent-strong), #6b63ff);
+      box-shadow: 0 10px 26px rgba(45, 140, 240, .3);
+    }
+    h1 { margin: 0; font-size: 19px; letter-spacing: .02em; }
+    .subtitle { margin: 2px 0 0; color: var(--muted); font-size: 12px; }
+    button { font: inherit; cursor: pointer; }
+    .ghost {
+      padding: 8px 12px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      color: var(--muted);
+      background: transparent;
+    }
+    .ghost:hover { color: var(--text); border-color: rgba(87, 182, 255, .65); }
+    .mode-tabs {
+      display: flex;
+      gap: 8px;
+      padding: 12px 26px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .mode-button {
+      padding: 9px 14px;
+      border: 0;
+      border-bottom: 2px solid transparent;
+      color: var(--muted);
+      background: transparent;
+    }
+    .mode-button.active {
+      color: var(--text);
+      border-bottom-color: var(--accent);
+    }
+    .messages[hidden], .composer-wrap[hidden], .extract-panel[hidden] { display: none; }
+    .extract-panel { flex: 1; padding: 28px 26px; overflow-y: auto; }
+    .extract-title { margin: 0 0 6px; font-size: 18px; }
+    .extract-description { margin: 0 0 18px; color: var(--muted); font-size: 13px; }
+    .extract-input {
+      width: 100%;
+      min-height: 150px;
+      resize: vertical;
+      padding: 13px 14px;
+      color: var(--text);
+      font: inherit;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      outline: none;
+      background: rgba(6, 16, 30, .7);
+    }
+    .extract-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(87, 182, 255, .12); }
+    .extract-actions { display: flex; justify-content: flex-end; margin-top: 12px; }
+    .extract-button { min-width: 110px; height: 44px; }
+    .extract-result {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin: 22px 0 0;
+    }
+    .result-card { padding: 14px; border: 1px solid var(--line); border-radius: 13px; background: var(--panel-soft); }
+    .result-card dt { color: var(--muted); font-size: 12px; }
+    .result-card dd { min-height: 25px; margin: 4px 0 0; word-break: break-word; }
+    .messages {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      min-height: 360px;
+      padding: 26px;
+      overflow-y: auto;
+    }
+    .welcome {
+      max-width: 640px;
+      margin: auto;
+      padding: 28px;
+      text-align: center;
+      color: var(--muted);
+      border: 1px dashed var(--line);
+      border-radius: 18px;
+      background: rgba(18, 36, 59, .36);
+    }
+    .welcome strong { display: block; margin-bottom: 7px; color: var(--text); font-size: 20px; }
+    .message-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-start; }
+    .message-row.user { justify-content: flex-end; }
+    .avatar {
+      flex: 0 0 auto;
+      display: grid;
+      place-items: center;
+      width: 32px; height: 32px;
+      border-radius: 10px;
+      color: #cfe9ff;
+      background: var(--panel-soft);
+      font-size: 13px;
+    }
+    .user .avatar { order: 2; color: #fff; background: var(--user); }
+    .bubble {
+      max-width: min(720px, 82%);
+      min-width: 0;
+      padding: 11px 14px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: var(--assistant);
+    }
+    .user .bubble { border-color: rgba(87, 182, 255, .32); background: var(--user); }
+    .bubble.pending::after { content: "▌"; margin-left: 2px; color: var(--accent); animation: blink .8s infinite; }
+    @keyframes blink { 50% { opacity: 0; } }
+    .composer-wrap { padding: 18px 26px 22px; border-top: 1px solid var(--line); }
+    .status { min-height: 22px; margin-bottom: 8px; color: var(--muted); font-size: 12px; }
+    .status.error { color: var(--danger); }
+    .composer { display: flex; gap: 10px; align-items: flex-end; }
+    textarea {
+      flex: 1;
+      min-height: 50px;
+      max-height: 150px;
+      resize: vertical;
+      padding: 13px 14px;
+      color: var(--text);
+      font: inherit;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      outline: none;
+      background: rgba(6, 16, 30, .7);
+    }
+    textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(87, 182, 255, .12); }
+    .send {
+      min-width: 82px;
+      height: 50px;
+      padding: 0 18px;
+      border: 0;
+      border-radius: 14px;
+      color: #fff;
+      font-weight: 600;
+      background: linear-gradient(135deg, var(--accent-strong), #4c79ff);
+    }
+    .send:hover { filter: brightness(1.08); }
+    .send:disabled, textarea:disabled { cursor: not-allowed; opacity: .55; }
+    .hint { margin: 8px 2px 0; color: var(--muted); font-size: 11px; }
+    @media (max-width: 640px) {
+      .shell { width: 100%; padding: 0; }
+      .app-card { min-height: 100vh; border: 0; border-radius: 0; }
+      header, .messages, .composer-wrap, .mode-tabs, .extract-panel { padding-left: 16px; padding-right: 16px; }
+      .bubble { max-width: 86%; }
+      .extract-result { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="app-card" aria-label="电商智能客服">
+      <header>
+        <div class="brand">
+          <div class="logo" aria-hidden="true">✦</div>
+          <div>
+            <h1>电商智能客服</h1>
+            <p class="subtitle">Chapter 01 · 纯对话 SSE</p>
+          </div>
+        </div>
+        <button id="clearSession" class="ghost" type="button">新建会话</button>
+      </header>
+
+      <nav class="mode-tabs" aria-label="功能模式">
+        <button id="chatMode" class="mode-button active" type="button" aria-selected="true">对话</button>
+        <button id="extractMode" class="mode-button" type="button" aria-selected="false">售后提取</button>
+      </nav>
+
+      <section id="messages" class="messages" aria-live="polite">
+        <div id="welcome" class="welcome">
+          <strong>您好，我是智能客服</strong>
+          可以咨询商品、物流或售后问题。本章不会直接操作真实订单；如果需要办理售后，我会先帮您整理必要信息。
+        </div>
+      </section>
+
+      <section id="extractPanel" class="extract-panel" hidden>
+        <h2 class="extract-title">售后信息提取</h2>
+        <p class="extract-description">粘贴用户的售后描述，提取订单号、诉求类型和期望方案。</p>
+        <textarea id="extractInput" class="extract-input" maxlength="16000" placeholder="例如：订单 A202609130001，耳机左边没有声音，我想换一个新的。" aria-label="售后描述"></textarea>
+        <div class="extract-actions">
+          <button id="extractButton" class="send extract-button" type="button">开始提取</button>
+        </div>
+        <div id="extractStatus" class="status" role="status"></div>
+        <dl id="extractResult" class="extract-result" hidden>
+          <div class="result-card"><dt>订单号</dt><dd id="resultOrderId">—</dd></div>
+          <div class="result-card"><dt>诉求类型</dt><dd id="resultRequestType">—</dd></div>
+          <div class="result-card"><dt>期望方案</dt><dd id="resultSolution">—</dd></div>
+        </dl>
+      </section>
+
+      <div id="composerWrap" class="composer-wrap">
+        <div id="status" class="status" role="status"></div>
+        <form id="composer" class="composer">
+          <textarea id="input" maxlength="8000" placeholder="请输入问题，例如：我买的耳机左边没有声音，想换货。" aria-label="对话输入"></textarea>
+          <button id="send" class="send" type="submit">发送</button>
+        </form>
+        <p class="hint">Enter 发送，Shift + Enter 换行。会话保存在当前浏览器，服务重启后需新建会话。</p>
+      </div>
+    </section>
+  </main>
+  <script>
+    const SESSION_KEY = "ecs.session_id";
+    const CHAT_HISTORY_KEY = "ecs.chat_history";
+    const messages = document.querySelector("#messages");
+    const welcome = document.querySelector("#welcome");
+    const input = document.querySelector("#input");
+    const send = document.querySelector("#send");
+    const composer = document.querySelector("#composer");
+    const composerWrap = document.querySelector("#composerWrap");
+    const status = document.querySelector("#status");
+    const clearSession = document.querySelector("#clearSession");
+    const chatMode = document.querySelector("#chatMode");
+    const extractMode = document.querySelector("#extractMode");
+    const extractPanel = document.querySelector("#extractPanel");
+    const extractInput = document.querySelector("#extractInput");
+    const extractButton = document.querySelector("#extractButton");
+    const extractStatus = document.querySelector("#extractStatus");
+    const extractResult = document.querySelector("#extractResult");
+    const resultOrderId = document.querySelector("#resultOrderId");
+    const resultRequestType = document.querySelector("#resultRequestType");
+    const resultSolution = document.querySelector("#resultSolution");
+
+    let sessionId = localStorage.getItem(SESSION_KEY);
+    let assistantBubble = null;
+
+    function setStatus(text = "", isError = false) {
+      status.textContent = text;
+      status.classList.toggle("error", isError);
+    }
+
+    function saveChatHistory() {
+      const history = [...messages.querySelectorAll(".message-row")].map((row) => {
+        const bubble = row.querySelector(".bubble");
+        return {
+          role: row.classList.contains("user") ? "user" : "assistant",
+          text: bubble?.textContent || "",
+        };
+      });
+      localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(history));
+    }
+
+    function addMessage(role, text = "", persist = true) {
+      welcome.hidden = true;
+      const row = document.createElement("div");
+      row.className = `message-row ${role}`;
+      const avatar = document.createElement("div");
+      avatar.className = "avatar";
+      avatar.textContent = role === "user" ? "我" : "客";
+      const bubble = document.createElement("div");
+      bubble.className = "bubble";
+      bubble.textContent = text;
+      row.append(avatar, bubble);
+      messages.appendChild(row);
+      messages.scrollTop = messages.scrollHeight;
+      if (persist) saveChatHistory();
+      return bubble;
+    }
+
+    function restoreChatHistory() {
+      try {
+        const history = JSON.parse(localStorage.getItem(CHAT_HISTORY_KEY) || "[]");
+        if (!Array.isArray(history)) return;
+        history
+          .filter((item) => (item?.role === "user" || item?.role === "assistant") && typeof item.text === "string")
+          .forEach((item) => addMessage(item.role, item.text, false));
+      } catch {
+        localStorage.removeItem(CHAT_HISTORY_KEY);
+      }
+    }
+
+    function setBusy(busy) {
+      input.disabled = busy;
+      send.disabled = busy;
+      clearSession.disabled = busy;
+    }
+
+    function setMode(mode) {
+      const isChat = mode === "chat";
+      messages.hidden = !isChat;
+      composerWrap.hidden = !isChat;
+      extractPanel.hidden = isChat;
+      chatMode.classList.toggle("active", isChat);
+      extractMode.classList.toggle("active", !isChat);
+      chatMode.setAttribute("aria-selected", String(isChat));
+      extractMode.setAttribute("aria-selected", String(!isChat));
+      if (isChat) input.focus();
+      else extractInput.focus();
+    }
+
+    function parseSseBlock(block) {
+      let event = "message";
+      const data = [];
+      for (const line of block.split("\n")) {
+        if (line.startsWith("event:")) event = line.slice(6).trim();
+        if (line.startsWith("data:")) data.push(line.slice(5).trimStart());
+      }
+      if (!data.length) return null;
+      try { return { event, data: JSON.parse(data.join("\n")) }; }
+      catch { return { event, data: { message: data.join("\n") } }; }
+    }
+
+    function ensureAssistantBubble() {
+      if (!assistantBubble) {
+        assistantBubble = addMessage("assistant");
+        assistantBubble.classList.add("pending");
+      }
+      return assistantBubble;
+    }
+
+    async function consumeStream(response) {
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      while (true) {
+        const { value, done } = await reader.read();
+        buffer += decoder.decode(value || new Uint8Array(), { stream: !done });
+        const blocks = buffer.split("\n\n");
+        buffer = blocks.pop() || "";
+        for (const block of blocks) {
+          const event = parseSseBlock(block);
+          if (!event) continue;
+          if (event.event === "meta" && event.data.session_id) {
+            sessionId = event.data.session_id;
+            localStorage.setItem(SESSION_KEY, sessionId);
+          } else if (event.event === "delta") {
+            ensureAssistantBubble();
+            assistantBubble.textContent += event.data.text || "";
+            saveChatHistory();
+            messages.scrollTop = messages.scrollHeight;
+          } else if (event.event === "error") {
+            throw new Error(event.data.message || "模型调用失败");
+          } else if (event.event === "done") {
+            setStatus("已完成");
+          }
+        }
+        if (done) break;
+      }
+      if (assistantBubble) assistantBubble.classList.remove("pending");
+    }
+
+    function clearConversationView() {
+      messages.querySelectorAll(".message-row").forEach((node) => node.remove());
+      localStorage.removeItem(SESSION_KEY);
+      localStorage.removeItem(CHAT_HISTORY_KEY);
+      sessionId = null;
+      welcome.hidden = false;
+    }
+
+    async function sendMessage(message, canRetryExpiredSession = true) {
+      setBusy(true);
+      setStatus("客服正在思考…");
+      assistantBubble = null;
+      addMessage("user", message);
+      try {
+        const response = await fetch("/api/v1/chat/stream", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Accept": "text/event-stream" },
+          body: JSON.stringify({ session_id: sessionId || null, message }),
+        });
+        if (!response.ok) {
+          let detail = `请求失败（${response.status}）`;
+          try { detail = (await response.json()).detail || detail; } catch {}
+          if (response.status === 404 && sessionId && canRetryExpiredSession) {
+            clearConversationView();
+            setStatus("会话已过期，正在新建会话…");
+            return await sendMessage(message, false);
+          }
+          throw new Error(detail);
+        }
+        await consumeStream(response);
+      } catch (error) {
+        if (assistantBubble) assistantBubble.classList.remove("pending");
+        setStatus(error instanceof Error ? error.message : "请求失败，请稍后重试", true);
+      } finally {
+        setBusy(false);
+        input.focus();
+      }
+    }
+
+    async function extractAfterSales() {
+      const text = extractInput.value.trim();
+      if (!text || extractButton.disabled) return;
+      extractButton.disabled = true;
+      extractStatus.classList.remove("error");
+      extractStatus.textContent = "正在提取…";
+      extractResult.hidden = true;
+      try {
+        const response = await fetch("/api/v1/after-sales/extract", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text }),
+        });
+        if (!response.ok) {
+          let detail = `请求失败（${response.status}）`;
+          try { detail = (await response.json()).detail || detail; } catch {}
+          throw new Error(detail);
+        }
+        const data = await response.json();
+        resultOrderId.textContent = data.order_id || "未识别";
+        resultRequestType.textContent = data.request_type || "unknown";
+        resultSolution.textContent = data.expected_solution || "未识别";
+        extractResult.hidden = false;
+        extractStatus.textContent = "提取完成";
+      } catch (error) {
+        extractStatus.classList.add("error");
+        extractStatus.textContent = error instanceof Error ? error.message : "提取失败，请稍后重试";
+      } finally {
+        extractButton.disabled = false;
+      }
+    }
+
+    chatMode.addEventListener("click", () => setMode("chat"));
+    extractMode.addEventListener("click", () => setMode("extract"));
+    extractButton.addEventListener("click", extractAfterSales);
+    composer.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const message = input.value.trim();
+      if (!message || send.disabled) return;
+      input.value = "";
+      sendMessage(message);
+    });
+    input.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        composer.requestSubmit();
+      }
+    });
+    restoreChatHistory();
+    clearSession.addEventListener("click", () => {
+      clearConversationView();
+      setStatus("已新建会话");
+      input.focus();
+    });
+  </script>
+</body>
+</html>

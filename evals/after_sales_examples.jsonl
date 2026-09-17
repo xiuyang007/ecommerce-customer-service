@@ -1,0 +1,5 @@
+{"text":"订单 A202609130001，耳机左侧没有声音，我想换一个新的。","expected":{"order_id":"A202609130001","request_type":"exchange","expected_solution":"换一个新的"}}
+{"text":"订单 000123 的商品不想要了，请退款。","expected":{"order_id":"000123","request_type":"return_refund","expected_solution":"退款"}}
+{"text":"收到的衣服破了，能不能修？没有订单号。","expected":{"order_id":null,"request_type":"repair","expected_solution":"维修"}}
+{"text":"我想问一下售后怎么处理。","expected":{"order_id":null,"request_type":"unknown","expected_solution":null}}
+{"text":"订单 A1 和 B2 都有问题，两个都给我退。","expected":{"order_id":null,"request_type":"refund","expected_solution":"两个订单都退款"}}
