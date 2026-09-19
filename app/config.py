@@ -28,6 +28,13 @@ class Settings(BaseSettings):
         pattern="^(json_schema|json_mode|function_calling)$",
     )
 
+    database_url: str = (
+        "mysql+asyncmy://app:app_password@127.0.0.1:13306/"
+        "ecommerce_support?charset=utf8mb4"
+    )
+    database_echo: bool = False
+    tool_max_steps: int = Field(default=1, ge=1, le=10)
+
     context_window_tokens: int = Field(default=8192, ge=512)
     output_reserved_tokens: int = Field(default=800, ge=1)
     context_safety_tokens: int = Field(default=256, ge=0)

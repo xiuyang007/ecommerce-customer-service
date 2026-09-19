@@ -19,6 +19,7 @@
       --assistant: #142941;
       --danger: #ff8e8e;
     }
+
     * { box-sizing: border-box; }
     body {
       min-height: 100vh;
@@ -30,6 +31,7 @@
         radial-gradient(circle at 95% 100%, rgba(87, 182, 255, .12), transparent 30%),
         var(--bg);
     }
+
     .shell { width: min(980px, calc(100% - 32px)); margin: 0 auto; padding: 32px 0; }
     .app-card {
       min-height: calc(100vh - 64px);
@@ -72,6 +74,7 @@
       background: transparent;
     }
     .ghost:hover { color: var(--text); border-color: rgba(87, 182, 255, .65); }
+
     .mode-tabs {
       display: flex;
       gap: 8px;
@@ -89,8 +92,12 @@
       color: var(--text);
       border-bottom-color: var(--accent);
     }
-    .messages[hidden], .composer-wrap[hidden], .extract-panel[hidden] { display: none; }
-    .extract-panel { flex: 1; padding: 28px 26px; overflow-y: auto; }
+    .messages[hidden], .composer-wrap[hidden], .extract-panel[hidden], .database-panel[hidden] { display: none; }
+    .extract-panel {
+      flex: 1;
+      padding: 28px 26px;
+      overflow-y: auto;
+    }
     .extract-title { margin: 0 0 6px; font-size: 18px; }
     .extract-description { margin: 0 0 18px; color: var(--muted); font-size: 13px; }
     .extract-input {
@@ -117,6 +124,45 @@
     .result-card { padding: 14px; border: 1px solid var(--line); border-radius: 13px; background: var(--panel-soft); }
     .result-card dt { color: var(--muted); font-size: 12px; }
     .result-card dd { min-height: 25px; margin: 4px 0 0; word-break: break-word; }
+    .database-panel {
+      flex: 1;
+      padding: 24px 26px 28px;
+      overflow-y: auto;
+    }
+    .database-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 14px;
+    }
+    .database-title { margin: 0; font-size: 18px; }
+    .database-description { margin: 5px 0 0; color: var(--muted); font-size: 12px; }
+    .database-grid { display: grid; gap: 16px; }
+    .database-card {
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(13, 27, 46, .72);
+    }
+    .database-card-header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+    .database-card h3 { margin: 0; font-size: 15px; }
+    .database-count { color: var(--muted); font-size: 11px; }
+    .table-scroll { overflow: auto; max-height: 330px; border: 1px solid var(--line); border-radius: 6px; }
+    .database-table { width: max-content; min-width: 100%; border-collapse: collapse; font-size: 12px; }
+    .database-table th, .database-table td {
+      max-width: 280px;
+      padding: 8px 10px;
+      text-align: left;
+      vertical-align: top;
+      border-bottom: 1px solid rgba(148, 163, 184, .14);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .database-table th { position: sticky; top: 0; z-index: 1; color: #cfe9ff; background: #12263e; }
+    .database-table tr:last-child td { border-bottom: 0; }
+    .database-empty { padding: 18px; color: var(--muted); text-align: center; }
     .messages {
       flex: 1;
       display: flex;
@@ -162,7 +208,29 @@
     }
     .user .bubble { border-color: rgba(87, 182, 255, .32); background: var(--user); }
     .bubble.pending::after { content: "▌"; margin-left: 2px; color: var(--accent); animation: blink .8s infinite; }
+    .tool-trace {
+      flex: 0 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      width: calc(100% - 42px);
+      margin-left: 42px;
+    }
+    .tool-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 8px;
+      border: 1px solid rgba(87, 182, 255, .35);
+      border-radius: 999px;
+      color: #cfe9ff;
+      background: rgba(45, 140, 240, .12);
+      font-size: 11px;
+    }
+    .tool-badge.running { color: #f4d58d; border-color: rgba(244, 213, 141, .35); }
+    .tool-badge.error { color: var(--danger); border-color: rgba(255, 142, 142, .4); }
     @keyframes blink { 50% { opacity: 0; } }
+
     .composer-wrap { padding: 18px 26px 22px; border-top: 1px solid var(--line); }
     .status { min-height: 22px; margin-bottom: 8px; color: var(--muted); font-size: 12px; }
     .status.error { color: var(--danger); }
@@ -194,12 +262,12 @@
     .send:hover { filter: brightness(1.08); }
     .send:disabled, textarea:disabled { cursor: not-allowed; opacity: .55; }
     .hint { margin: 8px 2px 0; color: var(--muted); font-size: 11px; }
+
     @media (max-width: 640px) {
       .shell { width: 100%; padding: 0; }
       .app-card { min-height: 100vh; border: 0; border-radius: 0; }
-      header, .messages, .composer-wrap, .mode-tabs, .extract-panel { padding-left: 16px; padding-right: 16px; }
+      header, .messages, .composer-wrap { padding-left: 16px; padding-right: 16px; }
       .bubble { max-width: 86%; }
-      .extract-result { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -211,7 +279,7 @@
           <div class="logo" aria-hidden="true">✦</div>
           <div>
             <h1>电商智能客服</h1>
-            <p class="subtitle">Chapter 01 · 纯对话 SSE</p>
+            <p class="subtitle">DeepSeek Flash · Function Calling</p>
           </div>
         </div>
         <button id="clearSession" class="ghost" type="button">新建会话</button>
@@ -220,12 +288,13 @@
       <nav class="mode-tabs" aria-label="功能模式">
         <button id="chatMode" class="mode-button active" type="button" aria-selected="true">对话</button>
         <button id="extractMode" class="mode-button" type="button" aria-selected="false">售后提取</button>
+        <button id="databaseMode" class="mode-button" type="button" aria-selected="false">数据表</button>
       </nav>
 
       <section id="messages" class="messages" aria-live="polite">
         <div id="welcome" class="welcome">
           <strong>您好，我是智能客服</strong>
-          可以咨询商品、物流或售后问题。本章不会直接操作真实订单；如果需要办理售后，我会先帮您整理必要信息。
+          可以咨询商品、物流或售后问题。暂时不会直接操作真实订单；如果需要办理售后，我会先帮您整理必要信息。
         </div>
       </section>
 
@@ -244,29 +313,44 @@
         </dl>
       </section>
 
+      <section id="databasePanel" class="database-panel" hidden>
+        <div class="database-header">
+          <div>
+            <h2 class="database-title">数据库表</h2>
+            <p class="database-description">只读展示 MySQL 中业务表的最近记录。</p>
+          </div>
+          <button id="refreshTables" class="ghost" type="button">刷新</button>
+        </div>
+        <div id="databaseStatus" class="status" role="status"></div>
+        <div id="databaseGrid" class="database-grid"></div>
+      </section>
+
       <div id="composerWrap" class="composer-wrap">
         <div id="status" class="status" role="status"></div>
         <form id="composer" class="composer">
-          <textarea id="input" maxlength="8000" placeholder="请输入问题，例如：我买的耳机左边没有声音，想换货。" aria-label="对话输入"></textarea>
+          <textarea id="input" maxlength="8000" placeholder="请输入您的问题…" aria-label="消息输入框"></textarea>
           <button id="send" class="send" type="submit">发送</button>
         </form>
-        <p class="hint">Enter 发送，Shift + Enter 换行。会话保存在当前浏览器，服务重启后需新建会话。</p>
+        <div class="hint">Enter 发送 · Shift + Enter 换行</div>
       </div>
     </section>
   </main>
+
+
   <script>
-    const SESSION_KEY = "ecs.session_id";
-    const CHAT_HISTORY_KEY = "ecs.chat_history";
+    const SESSION_KEY = "ecommerce_customer_service_session_id";
+    const CHAT_HISTORY_KEY = "ecommerce_customer_service_chat_history";
     const messages = document.querySelector("#messages");
     const welcome = document.querySelector("#welcome");
+    const status = document.querySelector("#status");
     const input = document.querySelector("#input");
     const send = document.querySelector("#send");
     const composer = document.querySelector("#composer");
     const composerWrap = document.querySelector("#composerWrap");
-    const status = document.querySelector("#status");
     const clearSession = document.querySelector("#clearSession");
     const chatMode = document.querySelector("#chatMode");
     const extractMode = document.querySelector("#extractMode");
+    const databaseMode = document.querySelector("#databaseMode");
     const extractPanel = document.querySelector("#extractPanel");
     const extractInput = document.querySelector("#extractInput");
     const extractButton = document.querySelector("#extractButton");
@@ -275,9 +359,14 @@
     const resultOrderId = document.querySelector("#resultOrderId");
     const resultRequestType = document.querySelector("#resultRequestType");
     const resultSolution = document.querySelector("#resultSolution");
+    const databasePanel = document.querySelector("#databasePanel");
+    const refreshTables = document.querySelector("#refreshTables");
+    const databaseStatus = document.querySelector("#databaseStatus");
+    const databaseGrid = document.querySelector("#databaseGrid");
 
     let sessionId = localStorage.getItem(SESSION_KEY);
     let assistantBubble = null;
+    let currentRequestId = "";
 
     function setStatus(text = "", isError = false) {
       status.textContent = text;
@@ -289,13 +378,18 @@
         const bubble = row.querySelector(".bubble");
         return {
           role: row.classList.contains("user") ? "user" : "assistant",
-          text: bubble?.textContent || "",
+          text: bubble?.dataset.rawText || bubble?.textContent || "",
+          requestId: bubble?.dataset.requestId || "",
         };
       });
       localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(history));
     }
 
-    function addMessage(role, text = "", persist = true) {
+    function renderAssistantBubble(bubble) {
+      bubble.textContent = bubble.dataset.rawText || "";
+    }
+
+    function addMessage(role, text = "", persist = true, metadata = {}) {
       welcome.hidden = true;
       const row = document.createElement("div");
       row.className = `message-row ${role}`;
@@ -304,7 +398,10 @@
       avatar.textContent = role === "user" ? "我" : "客";
       const bubble = document.createElement("div");
       bubble.className = "bubble";
-      bubble.textContent = text;
+      bubble.dataset.rawText = text;
+      if (metadata.requestId) bubble.dataset.requestId = metadata.requestId;
+      if (role === "assistant") renderAssistantBubble(bubble);
+      else bubble.textContent = text;
       row.append(avatar, bubble);
       messages.appendChild(row);
       messages.scrollTop = messages.scrollHeight;
@@ -314,11 +411,11 @@
 
     function restoreChatHistory() {
       try {
-        const history = JSON.parse(localStorage.getItem(CHAT_HISTORY_KEY) || "[]");
+      const history = JSON.parse(localStorage.getItem(CHAT_HISTORY_KEY) || "[]");
         if (!Array.isArray(history)) return;
         history
           .filter((item) => (item?.role === "user" || item?.role === "assistant") && typeof item.text === "string")
-          .forEach((item) => addMessage(item.role, item.text, false));
+          .forEach((item) => addMessage(item.role, item.text, false, item));
       } catch {
         localStorage.removeItem(CHAT_HISTORY_KEY);
       }
@@ -330,17 +427,39 @@
       clearSession.disabled = busy;
     }
 
-    function setMode(mode) {
-      const isChat = mode === "chat";
-      messages.hidden = !isChat;
-      composerWrap.hidden = !isChat;
-      extractPanel.hidden = isChat;
-      chatMode.classList.toggle("active", isChat);
-      extractMode.classList.toggle("active", !isChat);
-      chatMode.setAttribute("aria-selected", String(isChat));
-      extractMode.setAttribute("aria-selected", String(!isChat));
-      if (isChat) input.focus();
-      else extractInput.focus();
+    function ensureAssistantBubble() {
+      if (!assistantBubble) {
+        assistantBubble = addMessage("assistant");
+        assistantBubble.classList.add("pending");
+      }
+      return assistantBubble;
+    }
+
+    function appendToolBadge(name, status = "running", step = 1, callId = "") {
+      const bubble = ensureAssistantBubble();
+      const row = bubble.parentElement;
+      let trace = row.querySelector(".tool-trace");
+      if (!trace) {
+        trace = document.createElement("div");
+        trace.className = "tool-trace";
+        row.appendChild(trace);
+      }
+      const badge = document.createElement("span");
+      badge.className = `tool-badge ${status}`;
+      badge.dataset.tool = name;
+      badge.dataset.callId = callId || `${name}-${Date.now()}`;
+      badge.textContent = `工具 · ${name} · 第${step}步`;
+      trace.appendChild(badge);
+      messages.scrollTop = messages.scrollHeight;
+      return badge;
+    }
+
+    function updateToolBadge(callId, name, step, ok) {
+      const badge = messages.querySelector(`.tool-badge[data-call-id="${CSS.escape(callId)}"]`);
+      if (!badge) return;
+      badge.classList.remove("running");
+      badge.classList.toggle("error", !ok);
+      badge.textContent = `工具 · ${name} · 第${step}步 · ${ok ? "完成" : "失败"}`;
     }
 
     function parseSseBlock(block) {
@@ -353,14 +472,6 @@
       if (!data.length) return null;
       try { return { event, data: JSON.parse(data.join("\n")) }; }
       catch { return { event, data: { message: data.join("\n") } }; }
-    }
-
-    function ensureAssistantBubble() {
-      if (!assistantBubble) {
-        assistantBubble = addMessage("assistant");
-        assistantBubble.classList.add("pending");
-      }
-      return assistantBubble;
     }
 
     async function consumeStream(response) {
@@ -377,16 +488,39 @@
           if (!event) continue;
           if (event.event === "meta" && event.data.session_id) {
             sessionId = event.data.session_id;
+            currentRequestId = event.data.request_id || "";
             localStorage.setItem(SESSION_KEY, sessionId);
+          } else if (event.event === "tool_status") {
+            appendToolBadge(
+              event.data.tool || "unknown",
+              "running",
+              event.data.step || 1,
+              event.data.tool_call_id || "",
+            );
+            setStatus(`正在调用 ${event.data.tool || "工具"}…`);
+          } else if (event.event === "tool_result") {
+            updateToolBadge(
+              event.data.tool_call_id || "",
+              event.data.tool || "unknown",
+              event.data.step || 1,
+              Boolean(event.data.ok),
+            );
           } else if (event.event === "delta") {
             ensureAssistantBubble();
+            assistantBubble.dataset.rawText = (assistantBubble.dataset.rawText || "") + (event.data.text || "");
             assistantBubble.textContent += event.data.text || "";
             saveChatHistory();
             messages.scrollTop = messages.scrollHeight;
           } else if (event.event === "error") {
             throw new Error(event.data.message || "模型调用失败");
           } else if (event.event === "done") {
-            setStatus("已完成");
+            if (assistantBubble) {
+              assistantBubble.dataset.requestId = currentRequestId;
+              renderAssistantBubble(assistantBubble);
+              saveChatHistory();
+            }
+            const steps = Number(event.data.tool_steps || 0);
+            setStatus(steps > 0 ? `已完成 · 共 ${steps} 步工具调用` : "已完成");
           }
         }
         if (done) break;
@@ -406,6 +540,7 @@
       setBusy(true);
       setStatus("客服正在思考…");
       assistantBubble = null;
+      currentRequestId = "";
       addMessage("user", message);
       try {
         const response = await fetch("/api/v1/chat/stream", {
@@ -426,10 +561,106 @@
         await consumeStream(response);
       } catch (error) {
         if (assistantBubble) assistantBubble.classList.remove("pending");
-        setStatus(error instanceof Error ? error.message : "请求失败，请稍后重试", true);
+        const messageText = error instanceof Error ? error.message : "请求失败，请稍后重试";
+        setStatus(messageText, true);
       } finally {
         setBusy(false);
         input.focus();
+      }
+    }
+
+    function setMode(mode) {
+      const isChat = mode === "chat";
+      const isExtract = mode === "extract";
+      const isDatabase = mode === "database";
+      messages.hidden = !isChat;
+      composerWrap.hidden = !isChat;
+      extractPanel.hidden = !isExtract;
+      databasePanel.hidden = !isDatabase;
+      chatMode.classList.toggle("active", isChat);
+      extractMode.classList.toggle("active", isExtract);
+      databaseMode.classList.toggle("active", isDatabase);
+      chatMode.setAttribute("aria-selected", String(isChat));
+      extractMode.setAttribute("aria-selected", String(isExtract));
+      databaseMode.setAttribute("aria-selected", String(isDatabase));
+      if (isChat) input.focus();
+      else if (isExtract) extractInput.focus();
+      else loadDatabaseTables();
+    }
+
+    function formatDatabaseValue(value) {
+      if (value === null || value === undefined) return "NULL";
+      if (typeof value === "object") return JSON.stringify(value, null, 0);
+      return String(value);
+    }
+
+    async function loadDatabaseTables() {
+      databaseStatus.classList.remove("error");
+      databaseStatus.textContent = "正在读取数据库…";
+      refreshTables.disabled = true;
+      try {
+        const response = await fetch("/api/v1/database/tables?limit=20");
+        if (!response.ok) {
+          let detail = `读取失败（${response.status}）`;
+          try { detail = (await response.json()).detail || detail; } catch {}
+          throw new Error(detail);
+        }
+        const data = await response.json();
+        databaseGrid.replaceChildren();
+        for (const table of data.tables) {
+          const card = document.createElement("section");
+          card.className = "database-card";
+          const header = document.createElement("div");
+          header.className = "database-card-header";
+          const title = document.createElement("h3");
+          title.textContent = table.name;
+          const count = document.createElement("span");
+          count.className = "database-count";
+          count.textContent = `共 ${table.total} 条，显示最近 ${table.rows.length} 条`;
+          header.append(title, count);
+          card.appendChild(header);
+
+          if (!table.rows.length) {
+            const empty = document.createElement("div");
+            empty.className = "database-empty";
+            empty.textContent = "暂无数据";
+            card.appendChild(empty);
+          } else {
+            const scroll = document.createElement("div");
+            scroll.className = "table-scroll";
+            const htmlTable = document.createElement("table");
+            htmlTable.className = "database-table";
+            const thead = document.createElement("thead");
+            const headRow = document.createElement("tr");
+            table.columns.forEach((column) => {
+              const th = document.createElement("th");
+              th.textContent = column;
+              headRow.appendChild(th);
+            });
+            thead.appendChild(headRow);
+            const tbody = document.createElement("tbody");
+            table.rows.forEach((row) => {
+              const tr = document.createElement("tr");
+              table.columns.forEach((column) => {
+                const td = document.createElement("td");
+                td.textContent = formatDatabaseValue(row[column]);
+                td.title = td.textContent;
+                tr.appendChild(td);
+              });
+              tbody.appendChild(tr);
+            });
+            htmlTable.append(thead, tbody);
+            scroll.appendChild(htmlTable);
+            card.appendChild(scroll);
+          }
+          databaseGrid.appendChild(card);
+        }
+        databaseStatus.textContent = "数据库读取完成";
+      } catch (error) {
+        databaseStatus.classList.add("error");
+        databaseStatus.textContent = error instanceof Error ? error.message : "数据库读取失败";
+      } finally {
+        refreshTables.disabled = false;
       }
     }
 
@@ -467,7 +698,10 @@
 
     chatMode.addEventListener("click", () => setMode("chat"));
     extractMode.addEventListener("click", () => setMode("extract"));
+    databaseMode.addEventListener("click", () => setMode("database"));
+    refreshTables.addEventListener("click", loadDatabaseTables);
     extractButton.addEventListener("click", extractAfterSales);
+
     composer.addEventListener("submit", (event) => {
       event.preventDefault();
       const message = input.value.trim();
@@ -475,13 +709,16 @@
       input.value = "";
       sendMessage(message);
     });
+
     input.addEventListener("keydown", (event) => {
       if (event.key === "Enter" && !event.shiftKey) {
         event.preventDefault();
         composer.requestSubmit();
       }
     });
+
     restoreChatHistory();
+
     clearSession.addEventListener("click", () => {
       clearConversationView();
       setStatus("已新建会话");
