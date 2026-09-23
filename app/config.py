@@ -23,17 +23,25 @@ class Settings(BaseSettings):
     llm_model: str = "gpt-4o-mini"
     llm_temperature: float = Field(default=0.2, ge=0, le=2)
     llm_max_tokens: int = Field(default=800, ge=1)
-    llm_structured_method: str = Field(
-        default="function_calling",
-        pattern="^(json_schema|json_mode|function_calling)$",
-    )
+    llm_structured_method: str = Field(default="function_calling", pattern="^(json_schema|json_mode|function_calling)$")
 
-    database_url: str = (
-        "mysql+asyncmy://app:app_password@127.0.0.1:13306/"
-        "ecommerce_support?charset=utf8mb4"
-    )
+    database_url: str = "mysql+asyncmy://app:app_password@127.0.0.1:13306/ecommerce_support?charset=utf8mb4"
     database_echo: bool = False
-    tool_max_steps: int = Field(default=1, ge=1, le=10)
+    tool_max_steps: int = Field(default=3, ge=1, le=10)
+
+    milvus_uri: str = "http://127.0.0.1:19530"
+    milvus_token: SecretStr = SecretStr("")
+    milvus_collection: str = "knowledge_chunks"
+    embedding_model: str = "D:/models/huggingface/bge-m3"
+    embedding_device: str = "cpu"
+    reranker_model: str = "D:/models/huggingface/bge-reranker-v2-m3"
+    reranker_device: str = "cpu"
+    rag_dense_top_k: int = Field(default=50, ge=1, le=500)
+    rag_bm25_top_k: int = Field(default=50, ge=1, le=500)
+    rag_rrf_k: int = Field(default=60, ge=1, le=1000)
+    rag_final_top_k: int = Field(default=10, ge=1, le=100)
+    rag_min_rerank_score: float = Field(default=0.1, ge=0, le=1)
+    hf_home: str = "D:/models/huggingface"
 
     context_window_tokens: int = Field(default=8192, ge=512)
     output_reserved_tokens: int = Field(default=800, ge=1)

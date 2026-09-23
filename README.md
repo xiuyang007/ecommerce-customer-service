@@ -1,6 +1,6 @@
-# 电商智能客服系统（Chapter 02）
+# 电商智能客服系统（Chapter 04）
 
-第一章已跑通纯对话；第二章增加 MySQL/SQLAlchemy 持久化、五个业务工具和单轮 Function Calling，并把这些能力接回同一个 SSE 聊天入口。
+第一章已跑通纯对话；第二章增加 MySQL/SQLAlchemy 和单轮 Function Calling；第三章加入有界工具循环；第四章加入知识检索、引用和低置信度处理。
 
 ## 已实现
 
@@ -253,4 +253,29 @@ python -m uvicorn app.main:app --host 127.0.0.1 --port 8767
 python '.\scripts\smoke_tools.py' --base-url http://127.0.0.1:8767
 ```
 
-`邮费是多少` 当前预期由 `query_faq` 返回空结果，这是本章刻意保留的漏召回样例。
+`邮费是多少` 在第二章快照中由 `query_faq` 返回空结果；第四章知识库加入相关知识后，完整系统不再以此作为漏召回预期。
+
+## Chapter 04: 知识检索与引用
+
+第四章建立在第二章的数据库与工具调用之上，包含第三章的有界工具循环。知识库使用 Milvus dense + 原生 BM25 混合检索、RRF 融合和 bge-reranker-v2-m3 重排；证据不足时拒答并记录低置信度问题，回答附可查看的来源引用。浏览器页面支持引用查看和本地反馈。
+
+先从 `.env.example` 复制配置到本地 `.env`，填入自己的模型密钥，并确认 `EMBEDDING_MODEL`、`RERANKER_MODEL` 指向本机模型目录；不要提交 `.env`。启动 Docker Desktop 后，运行：
+
+```powershell
+.\scripts\start_ch04.ps1 -Ingest
+python -m uvicorn app.main:app --host 127.0.0.1 --port 8767
+```
+
+在另一终端运行完整验证（包含服务、真实上游和检索评估，需要 Docker、模型文件及有效 API 额度）：
+
+```powershell
+.\scripts\verify_ch04.ps1
+```
+
+仅运行不依赖外部服务的代码回归：
+
+```powershell
+python -m pytest -q
+```
+
+知识样例在 `knowledge/chunks.jsonl`，检索评估问法在 `evals/ch04/retrieval_queries.jsonl`。生成的评估报告由 `scripts/eval_retrieval.py` 写到 `evals/reports/`，提交不包含本机生成的报告。

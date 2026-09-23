@@ -6,7 +6,7 @@ from datetime import datetime
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from app.models import Conversation, FAQ, Message, Ticket
+from app.models import Conversation, FAQ, FaithCase, LowConfidenceQuestion, Message, Ticket
 from app.store.sessions import UnknownSessionError
 
 
@@ -96,6 +96,74 @@ class SqlAlchemyChatRepository:
             await session.commit()
             await session.refresh(ticket)
             return ticket
+
+    async def add_low_confidence_question(
+        self,
+        *,
+        conversation_id: int | None,
+        raw_question: str,
+        source: str,
+        reason: str | None,
+    ) -> LowConfidenceQuestion:
+        async with self._session_factory() as session:
+            row = LowConfidenceQuestion(
+                conversation_id=conversation_id,
+                raw_question=raw_question,
+                source=source,
+                reason=reason,
+            )
+            session.add(row)
+            await session.commit()
+            await session.refresh(row)
+            return row
+
+    async def upsert_faith_case(
+        self,
+        *,
+        eval_id: str,
+        bucket: str,
+        query: str,
+        strategy: str,
+        answer: str,
+        reason: str,
+        citations: list | None,
+        judge_model: str | None,
+    ) -> FaithCase:
+        async with self._session_factory() as session:
+            row = await session.scalar(
+                select(FaithCase).where(FaithCase.eval_id == eval_id).with_for_update()
+            )
+            now = datetime.now()
+            if row is None:
+                row = FaithCase(
+                    eval_id=eval_id,
+                    bucket=bucket,
+                    query=query,
+                    strategy=strategy,
+                    answer=answer,
+                    reason=reason,
+                    citations=citations,
+                    judge_model=judge_model,
+                    status="未解决",
+                    seen_count=1,
+                    first_seen_at=now,
+                    last_seen_at=now,
+                )
+                session.add(row)
+            else:
+                row.bucket = bucket
+                row.query = query
+                row.strategy = strategy
+                row.answer = answer
+                row.reason = reason
+                row.citations = citations
+                row.judge_model = judge_model
+                row.seen_count += 1
+                row.last_seen_at = now
+                row.status = "未解决"
+            await session.commit()
+            await session.refresh(row)
+            return row
 
     @staticmethod
     def _new_ticket_id() -> str:

@@ -1,0 +1,11 @@
+{"eval_id":"A01","query":"退货政策是什么","query_type":"A_policy","difficulty":"easy","ground_truth_chunk_ids":["policy-return#1"],"should_answer":true}
+{"eval_id":"A02","query":"退货运费谁负责","query_type":"A_policy","difficulty":"medium","ground_truth_chunk_ids":["policy-return#2"],"should_answer":true}
+{"eval_id":"A03","query":"电子发票可以申请吗","query_type":"A_policy","difficulty":"easy","ground_truth_chunk_ids":["policy-invoice#1"],"should_answer":true}
+{"eval_id":"B01","query":"X1001 左耳没声音怎么办","query_type":"B_model","difficulty":"easy","ground_truth_chunk_ids":["product-x1001#1"],"should_answer":true}
+{"eval_id":"B02","query":"K2000 支持换轴吗","query_type":"B_model","difficulty":"medium","ground_truth_chunk_ids":["product-k2000#1"],"should_answer":true}
+{"eval_id":"B03","query":"S4000 鞋码偏小吗","query_type":"B_model","difficulty":"medium","ground_truth_chunk_ids":["product-s4000#1"],"should_answer":true}
+{"eval_id":"C01","query":"耳机一边不响了能修吗","query_type":"C_colloquial","difficulty":"hard","ground_truth_chunk_ids":["product-x1001#1"],"should_answer":true}
+{"eval_id":"C02","query":"邮费怎么算","query_type":"C_colloquial","difficulty":"medium","ground_truth_chunk_ids":["logistics-fee#1"],"should_answer":true}
+{"eval_id":"C03","query":"钱什么时候回来","query_type":"C_colloquial","difficulty":"hard","ground_truth_chunk_ids":["policy-refund#1"],"should_answer":true}
+{"eval_id":"D01","query":"火星地址支持配送吗","query_type":"D_negative","difficulty":"easy","ground_truth_chunk_ids":[],"should_answer":false}
+{"eval_id":"D02","query":"你们能保证明天一定送到吗","query_type":"D_negative","difficulty":"medium","ground_truth_chunk_ids":[],"should_answer":false}

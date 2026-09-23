@@ -8,6 +8,7 @@ from typing import Literal
 from langchain_core.tools import BaseTool, tool
 
 from app.repositories import SqlAlchemyChatRepository
+from app.rag.retrieval import KnowledgeRetrievalService
 
 
 def _seed(value: str) -> int:
@@ -17,13 +18,15 @@ def _seed(value: str) -> int:
 def _order_data(order_id: str) -> dict:
     product_names = ("无线耳机", "机械键盘", "保温杯", "运动鞋")
     statuses = ("paid", "shipped", "delivered")
-    status = statuses[_seed(f"order:{order_id}") % len(statuses)]
+    product_name = product_names[_seed(order_id) % len(product_names)]
+    status = statuses[_seed(f"status:{order_id}") % len(statuses)]
     return {
         "order_id": order_id,
+        "product_id": f"P{1000 + _seed(f'product:{order_id}') % 9000}",
+        "product_name": product_name,
+        "amount": f"{99 + _seed(f'amount:{order_id}') % 900}.00",
         "status": status,
-        "product_name": product_names[_seed(f"product:{order_id}") % len(product_names)],
-        "amount": f"{199 + _seed(f'amount:{order_id}') % 1800}.00",
-        "created_at": (datetime.now() - timedelta(days=3)).strftime("%Y-%m-%d"),
+        "paid_at": "2026-09-10 10:00:00",
     }
 
 
@@ -36,11 +39,11 @@ class RegisteredTool:
 
 class ToolRegistry:
     def __init__(self, tools: list[RegisteredTool]):
-        self._tools = {registered.tool.name: registered for registered in tools}
+        self._tools = {item.tool.name: item for item in tools}
 
     @property
     def tools(self) -> list[BaseTool]:
-        return [registered.tool for registered in self._tools.values()]
+        return [item.tool for item in self._tools.values()]
 
     def get(self, name: str) -> RegisteredTool | None:
         return self._tools.get(name)
@@ -50,6 +53,7 @@ class ToolRegistry:
         cls,
         repository: SqlAlchemyChatRepository,
         conversation_id: int,
+        retrieval_service: KnowledgeRetrievalService | None = None,
     ) -> "ToolRegistry":
         @tool
         async def query_order(order_id: str) -> dict:
@@ -123,12 +127,25 @@ class ToolRegistry:
                 "status": ticket.status,
             }
 
-        return cls(
-            [
-                RegisteredTool(query_order, timeout_seconds=6, retryable=True),
-                RegisteredTool(query_product, timeout_seconds=6, retryable=True),
-                RegisteredTool(query_logistics, timeout_seconds=6, retryable=True),
-                RegisteredTool(query_faq, timeout_seconds=6, retryable=True),
-                RegisteredTool(create_ticket, timeout_seconds=6, retryable=False),
-            ]
-        )
+        @tool
+        async def search_knowledge(query: str, category: str | None = None) -> dict:
+            """混合检索知识库。query 是检索问题，category 可选过滤品类。"""
+            if retrieval_service is None:
+                return {"error": "knowledge retrieval is not configured", "citations": []}
+            result = await retrieval_service.search(
+                query,
+                category=category,
+                strategy="hybrid_rerank",
+            )
+            return result.to_tool_payload()
+
+        registered = [
+            RegisteredTool(query_order, timeout_seconds=6, retryable=True),
+            RegisteredTool(query_product, timeout_seconds=6, retryable=True),
+            RegisteredTool(query_logistics, timeout_seconds=6, retryable=True),
+            RegisteredTool(query_faq, timeout_seconds=6, retryable=True),
+            RegisteredTool(create_ticket, timeout_seconds=6, retryable=False),
+        ]
+        if retrieval_service is not None:
+            registered.append(RegisteredTool(search_knowledge, timeout_seconds=900, retryable=False))
+        return cls(registered)

@@ -13,7 +13,8 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from app.config import get_settings
 from app.db import SessionFactory
-from app.models import Conversation, FAQ, Message, Ticket
+from app.models import Conversation, FAQ, FaithCase, LowConfidenceQuestion, Message, Ticket
+from app.rag.retrieval import KnowledgeRetrievalService
 from app.repositories import SqlAlchemyChatRepository
 from app.schemas import AfterSalesExtractRequest, ChatRequest
 from app.services.chat import ChatService, ModelConfigurationError, ModelProvider
@@ -29,6 +30,7 @@ app = FastAPI(title=settings.app_name, version="0.1.0")
 app.state.sessions = InMemorySessionStore(settings)
 app.state.provider = ModelProvider(settings)
 app.state.repository = SqlAlchemyChatRepository(SessionFactory)
+app.state.retrieval_service = KnowledgeRetrievalService(settings, app.state.provider)
 
 
 def get_chat_service(request: Request):
@@ -37,6 +39,7 @@ def get_chat_service(request: Request):
             settings,
             request.app.state.provider,
             request.app.state.repository,
+            request.app.state.retrieval_service,
         )
     return ChatService(settings, request.app.state.sessions, request.app.state.provider)
 
@@ -100,7 +103,7 @@ def _serialize_database_value(value):
 
 @app.get("/api/v1/database/tables")
 async def database_tables(limit: int = Query(default=20, ge=1, le=100)) -> JSONResponse:
-    models = (FAQ, Conversation, Message, Ticket)
+    models = (FAQ, Conversation, Message, Ticket, LowConfidenceQuestion, FaithCase)
     tables = []
     try:
         async with SessionFactory() as session:

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import BigInteger, DateTime, ForeignKey, Index, Integer, JSON, String, Text, func
+from sqlalchemy import BigInteger, DateTime, Enum, ForeignKey, Index, Integer, JSON, String, Text, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
@@ -93,4 +93,60 @@ class Ticket(Base):
     __table_args__ = (
         Index("idx_tickets_conversation_created", "conversation_id", "created_at"),
         Index("idx_tickets_status", "status"),
+    )
+
+
+class LowConfidenceQuestion(Base):
+    __tablename__ = "low_confidence_questions"
+
+    id: Mapped[int] = mapped_column(BIGINT_ID, primary_key=True, autoincrement=True)
+    conversation_id: Mapped[int | None] = mapped_column(
+        BIGINT_ID, ForeignKey("conversations.id"), nullable=True
+    )
+    raw_question: Mapped[str] = mapped_column(Text, nullable=False)
+    source: Mapped[str] = mapped_column(
+        Enum("retrieval_low_conf", "self_check", "user_feedback", name="low_confidence_source"),
+        nullable=False,
+    )
+    reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, server_default=func.now()
+    )
+
+    __table_args__ = (
+        Index("idx_lcq_source", "source"),
+        Index("idx_lcq_created_at", "created_at"),
+    )
+
+
+class FaithCase(Base):
+    __tablename__ = "faith_cases"
+
+    id: Mapped[int] = mapped_column(BIGINT_ID, primary_key=True, autoincrement=True)
+    eval_id: Mapped[str] = mapped_column(String(16), nullable=False, unique=True)
+    bucket: Mapped[str] = mapped_column(String(24), nullable=False)
+    query: Mapped[str] = mapped_column(String(512), nullable=False)
+    strategy: Mapped[str] = mapped_column(String(24), nullable=False, default="hybrid_rerank")
+    answer: Mapped[str] = mapped_column(Text, nullable=False)
+    reason: Mapped[str] = mapped_column(Text, nullable=False)
+    citations: Mapped[list | None] = mapped_column(JSON, nullable=True)
+    judge_model: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    status: Mapped[str] = mapped_column(
+        Enum("未解决", "已解决", "无需解决", name="faith_case_status"),
+        nullable=False,
+        default="未解决",
+    )
+    seen_count: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    first_seen_at: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, server_default=func.now()
+    )
+    last_seen_at: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, server_default=func.now()
+    )
+    resolution: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    resolved_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+    __table_args__ = (
+        Index("idx_faith_cases_status", "status"),
+        Index("idx_faith_cases_last_seen", "last_seen_at"),
     )

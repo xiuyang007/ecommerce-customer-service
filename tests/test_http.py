@@ -162,7 +162,7 @@ async def test_missing_llm_key_is_rejected_before_sse_starts() -> None:
 
 
 @pytest.mark.asyncio
-async def test_database_tables_returns_four_business_tables(
+async def test_database_tables_returns_six_business_tables(
     monkeypatch,
     sqlite_session_factory,
 ) -> None:
@@ -177,6 +177,8 @@ async def test_database_tables_returns_four_business_tables(
         "conversations",
         "messages",
         "tickets",
+        "low_confidence_questions",
+        "faith_cases",
     ]
     counts = {table["name"]: table["total"] for table in tables}
     assert counts == {
@@ -184,6 +186,8 @@ async def test_database_tables_returns_four_business_tables(
         "conversations": 1,
         "messages": 1,
         "tickets": 1,
+        "low_confidence_questions": 0,
+        "faith_cases": 0,
     }
     assert tables[3]["rows"][0]["ticket_id"] == "T202609190001"
 
@@ -206,5 +210,5 @@ async def test_browser_client_is_served_at_root() -> None:
     assert "api/v1/chat/stream" in response.text
     assert "tool-badge" in response.text
     assert "数据表" in response.text
-    assert "citation-ref" not in response.text
-    assert "已反馈" not in response.text
+    assert "citation-ref" in response.text
+    assert "已反馈" in response.text
